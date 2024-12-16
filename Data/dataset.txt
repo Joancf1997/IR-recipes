@@ -1,0 +1,7 @@
+Dataset URL: https://www.kaggle.com/datasets/wilmerarltstrmberg/recipe-dataset-over-2m?resource=download
+
+(new one) Dataset URL - 500K: https://www.kaggle.com/datasets/shuyangli94/foodcom-recipes-with-search-terms-and-tags?select=recipes_w_search_terms.csv
+
+
+vector Embeding: https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2
+
