@@ -19,17 +19,16 @@ recipes = [
 ]
 
 # Load the dataset
-df = pd.read_csv('../Data/recipes_w_data.csv', usecols=['name'])
-descriptions = df['name'].dropna().to_numpy()
-recipes = descriptions
-
-
+df = pd.read_csv('../Data/recipes_w_data.csv', usecols=['steps'])
+descriptions = df['steps'].dropna().to_numpy()
+recipes = descriptions[:200]
 
 
 # Create the initial embeding of the "catalog recipes"
 def initial_recipes_embeding(recipes): 
     # (Clean and tokenize) - Preprocess the recipes 
     preprocessed_recipes = preprocess_dataset(recipes)
+    print(preprocessed_recipes[0])
 
     # (Generate embeddings) - Load a pre-trained SentenceTransformer model 
     model = SentenceTransformer("all-MiniLM-L6-v2")  
