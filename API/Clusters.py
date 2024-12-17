@@ -1,21 +1,34 @@
 import pandas as pd
+import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
+from DB import insert_recipes_to_db
+
 
 
 # Function to visualize the documents in the embedded space
-def visualize_verctor_docs(recipes, embeddings):
+def clusterize_embeddings(dataframe, num_clusters):
+    print("Clusterizing documents...")
+
+#  ===================== Clusterization part =====================
+
     # Standardize the embeddings to improve clustering performance
+    embeddings = np.array(dataframe["embedded_description"].tolist())
     scaler = StandardScaler()
     scaled_embeddings = scaler.fit_transform(embeddings)
 
-    # Apply K-Means clustering with 3 clusters
-    num_clusters = 3
+    # Apply K-Means clustering with n clusters
     kmeans = KMeans(n_clusters=num_clusters, random_state=42)
     labels = kmeans.fit_predict(scaled_embeddings)
+    dataframe['Cluster'] = labels
 
+    # (Store dataset and embeddings) - PostgreSQL
+    insert_recipes_to_db(dataframe)
+
+
+#  ===================== Visualization part =====================
     # Perform PCA for dimensionality reduction to 3D
     pca = PCA(n_components=3)
     pca_embeddings = pca.fit_transform(scaled_embeddings)
@@ -23,10 +36,13 @@ def visualize_verctor_docs(recipes, embeddings):
     # Create a DataFrame for easy visualization
     df = pd.DataFrame(pca_embeddings, columns=['PCA1', 'PCA2', 'PCA3'])
     df['Cluster'] = labels
-    df['Recipe'] = recipes
 
     # Define distinct colors for each cluster
-    cluster_colors = ['red', 'blue', 'green']
+    cluster_colors = [
+        "red", "blue", "purple", "green", "orange", 
+        "yellow", "pink", "brown", "gray", "cyan", 
+        "magenta", "lime", "indigo", "teal", "navy"
+    ]
     df['Color'] = df['Cluster'].map(lambda x: cluster_colors[x])
 
     # Plot the results in 3D space
@@ -45,15 +61,11 @@ def visualize_verctor_docs(recipes, embeddings):
     ax.set_zlabel('PCA 3')
     ax.set_title('Cluster Analysis of Recipes in 3D Space')
 
-
-    # Print the first two 'Recipe' for each cluster
-    # for cluster_id, group in df.groupby('Cluster'):
-    #     print(f"Cluster {cluster_id}:")
-    #     print(group['Recipe'].head(5).to_list())  # Convert to a list for cleaner output
-    #     print()
-
     # Add a legend
     ax.legend()
-
     # Show the plot
     plt.show()
+
+
+    return dataframe
+    

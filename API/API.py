@@ -3,43 +3,41 @@ import numpy as np
 import pandas as pd
 import psycopg2
 from psycopg2.extras import execute_values
-from representation import preprocess_dataset
-# from DB import store_embeddings_to_postgresql
-from Clusters import visualize_verctor_docs
+from pre_processing import preprocess_dataset
+from DB import test_db_connection
+from Clusters import clusterize_embeddings
 import os
 
-# Sample dataset
-recipes = [
-    "Spicy Indian Chicken: Mix spices and chicken, then grill.",
-    "Spicy Indian Chicken massala: Mix spices and chicken, then grilled.",
-    "Vegan Salad: Combine lettuce, tomatoes, and olive oil.",
-    "Green Salad: Combine lettuce, tomatoes, and olive oil and salt.",
-    "Seafood Pasta: Cook pasta and add shrimp with garlic sauce.",
-    "shrimp Pasta: Cook pasta and add shrimp with tomatoe sauce."
-]
 
-# Load the dataset
-df = pd.read_csv('../Data/recipes_w_data.csv', usecols=['steps'])
-descriptions = df['steps'].dropna().to_numpy()
-recipes = descriptions[:200]
+test_db_connection()
+n_rows = 1000
+n_clusters = 10
 
 
 # Create the initial embeding of the "catalog recipes"
-def initial_recipes_embeding(recipes): 
-    # (Clean and tokenize) - Preprocess the recipes 
+def initial_recipes_embeding(): 
+    # Load the dataset
+    print("Reading datasource, csv....")
+    recipes = pd.read_csv('../Data/recipes_w_data.csv', nrows=n_rows)
+    recipes = recipes[:n_rows]
+
+    # (Clean and prepare text) - Preprocess the recipes 
     preprocessed_recipes = preprocess_dataset(recipes)
-    print(preprocessed_recipes[0])
 
     # (Generate embeddings) - Load a pre-trained SentenceTransformer model 
+    print("Embedding descriptions....")
     model = SentenceTransformer("all-MiniLM-L6-v2")  
-    recipe_embeddings = model.encode(preprocessed_recipes)
+    preprocessed_recipes["embedded_description"] = preprocessed_recipes["processed_description"].apply(
+        lambda x: model.encode(x) if x else None
+    )
 
-    # (Visualize the documents) in the embeded space
-    visualize_verctor_docs(recipes, recipe_embeddings)
-
-    # (Store embeddings) - PostgreSQL
-    # store_embeddings_to_postgresql(preprocessed_recipes, recipe_embeddings)
+    # Clusterize the documents using the embedings
+    clusterize_embeddings(preprocessed_recipes, n_clusters)
 
 
-# Load test data
-initial_recipes_embeding(recipes)
+
+# Generate the embedding of the documents 
+initial_recipes_embeding()
+
+
+

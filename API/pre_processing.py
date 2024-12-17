@@ -14,4 +14,9 @@ def clean_text(text):
 
 # Preprocess dataset
 def preprocess_dataset(dataset):
-    return [clean_text(recipe) for recipe in dataset]
+    print("Pre Processing Data...")
+    dataset_clean = dataset.copy()
+    dataset_clean = dataset_clean.dropna()
+    dataset_clean['processed_description'] = dataset_clean['description'].apply(clean_text)
+
+    return dataset_clean

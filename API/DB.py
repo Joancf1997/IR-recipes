@@ -1,5 +1,15 @@
+import os
+import psycopg2
+from psycopg2.extras import execute_values
+from dotenv import load_dotenv
+import ast
+
+
+load_dotenv()
+
+
 # Database Configuration
-DB_CONFIG = {
+db_config = {
     "dbname": os.environ["DB_NAME"],
     "user": os.environ["DB_USER"],
     "password": os.environ["DB_PASSWORD"],
@@ -7,47 +17,64 @@ DB_CONFIG = {
     "port": os.environ["DB_PORT"]
 }
 
-# PostgreSQL Integration
-def store_embeddings_to_postgresql(titles, embeddings):
+
+def test_db_connection(): 
+    global db_config
+
+    print("testing DB connection....")
     try:
-        # Connect to PostgreSQL
-        conn = psycopg2.connect(**DB_CONFIG)
-        cursor = conn.cursor()
-
-        # Ensure pgvector extension is enabled
-        cursor.execute("CREATE EXTENSION IF NOT EXISTS vector;")
-
-        # Create the recipes table if not exists
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS recipes (
-                id SERIAL PRIMARY KEY,
-                title TEXT NOT NULL,
-                ingredients TEXT[],
-                directions TEXT[],
-                link varchar(255) ,
-                source varchar(255),
-                ner text[],
-                site varchar(255),
-                embedding VECTOR(384) -- Match embedding size
-            );
-        """)
-
-        # Prepare data for bulk insertion
-        records = [(titles[i], embeddings[i].tolist()) for i in range(len(titles))]
-        insert_query = """
-            INSERT INTO recipes (title, embedding) 
-            VALUES %s;
-        """
-        execute_values(cursor, insert_query, records)
-
-        # Commit the transaction
-        conn.commit()
-        print("Embeddings stored successfully in PostgreSQL.")
-
-    except Exception as e:
-        print("Error storing embeddings in PostgreSQL:", e)
-
+        conn = psycopg2.connect(**db_config)
+        print("Database connection established successfully!")
+    except psycopg2.Error as e:
+        print(f"Error connecting to the database: {e}")
     finally:
         if conn:
-            cursor.close()
             conn.close()
+            print("Database connection closed.")
+
+
+def insert_recipes_to_db(dataframe):
+    global db_config
+
+    print("Inserting data into db...")
+    # Establish connection
+    conn = psycopg2.connect(**db_config)
+    cursor = conn.cursor()
+
+    # SQL insert query
+    insert_query = """
+    INSERT INTO recipes (
+        id, name, description, ingredients, ingredients_raw_str, 
+        serving_size, servings, steps, tags, search_terms, 
+        processed_description, embedded_description, cluster_id
+    ) VALUES %s
+    """
+    
+    # Prepare data for bulk insert
+    records = []
+    for _, row in dataframe.iterrows():
+        records.append((
+            row['id'],
+            row['name'],
+            row['description'],
+            ast.literal_eval(row['ingredients']),
+            ast.literal_eval(row['ingredients_raw_str']),
+            row['serving_size'],
+            row['servings'],
+            ast.literal_eval(row['steps']),
+            ast.literal_eval(row['tags']),
+            row['search_terms'],
+            row['processed_description'],
+            row['embedded_description'].tolist(),
+            row['Cluster']
+        ))
+    
+    # Bulk insert using execute_values for performance
+    cursor.execute("DELETE FROM recipes;")
+    execute_values(cursor, insert_query, records)
+
+    # Commit transaction and close connection
+    conn.commit()
+    cursor.close()
+    conn.close()
+    print("Data successfully inserted into the database!")

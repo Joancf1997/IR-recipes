@@ -23,7 +23,7 @@ services:
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: recipes
-      DB_USER: ir_user
+      DB_USER: josecastanedaforno
       DB_PASSWORD: 1nf0Rm4t10NR3t
     depends_on:
       - postgres
