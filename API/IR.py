@@ -27,7 +27,7 @@ def genesis(data_path, n_rows, num_clusters, visualize_clusters):
     classification_model()                                          
     if(visualize_clusters):
         Cluster_visualization(recipes_emb, num_clusters)
-    return recipes_emb
+    return True
     
 
 
