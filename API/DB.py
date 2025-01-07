@@ -84,6 +84,16 @@ def insert_recipes_to_db(dataframe):
 
 
 
+def get_embedded_descriptions():
+    # Establish connection
+    conn = psycopg2.connect(**db_config)
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT id, name, embedded_description FROM recipes")
+    documents = cursor.fetchall()
+    
+    return documents
+
 
 
 """

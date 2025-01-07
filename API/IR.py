@@ -10,7 +10,8 @@ from sklearn.metrics import classification_report               # Classification
 from sklearn.ensemble import RandomForestClassifier             # Classification model 
 from sklearn.model_selection import train_test_split            # Classification model
 from sentence_transformers import SentenceTransformer
-from DB import insert_recipes_to_db, get_recipes_embeddings     # Insert data into DB (the cluster ID)
+from sklearn.metrics.pairwise import cosine_similarity
+from DB import insert_recipes_to_db, get_recipes_embeddings, get_embedded_descriptions
 
 
 
@@ -160,6 +161,53 @@ def classify_document(recipe):
     print(prediction[0])
     return prediction[0]
     
+
+
+
+
+#  ================================== NLP query extration ==================================
+"""
+    Retrieve the top N most relevant documents for a given natural language query.
+"""
+def get_top_documents(user_query, top_n=3):
+    print("Extraxting NLP query...")
+    # Load the pre-trained embedding model
+    embedding_model = SentenceTransformer("embedding_model")
+    
+    # Encode the user's query to obtain its embedding
+    query_embedding = embedding_model.encode(user_query).reshape(1, -1)
+    
+    # Retrieve document IDs and their embeddings from the database
+    documents = get_embedded_descriptions()
+    
+    # Extract embeddings and document metadata
+    doc_ids = []
+    doc_names = []
+    doc_embeddings = []
+    
+    for doc in documents:
+        doc_ids.append(doc[0])
+        doc_names.append(doc[1])
+        doc_embeddings.append(np.array(doc[2]))  # Convert stored embedding string to NumPy array
+    
+    # Calculate cosine similarity between the query embedding and all document embeddings
+    similarities = cosine_similarity(query_embedding, np.array(doc_embeddings)).flatten()
+    
+    # Get the top N most relevant document indices
+    top_indices = np.argsort(similarities)[::-1][:top_n]
+    
+    # Prepare the results
+    top_documents = []
+    for idx in top_indices:
+        top_documents.append({
+            "id": doc_ids[idx],
+            "name": doc_names[idx],
+            "similarity": similarities[idx]
+        })
+    
+    return top_documents
+
+
 
 
 

@@ -1,4 +1,4 @@
-from IR import genesis, classify_document
+from IR import genesis, classify_document, get_top_documents
 from DB import test_db_connection
 
 
@@ -16,5 +16,15 @@ data_path = '../Data/recipes_w_data.csv'
 
 
 # Classify a recipe
-recipe = "Sanwditch with cheese"
-classify_document(recipe)
+# recipe = "Sanwditch with cheese"
+# classify_document(recipe)
+
+
+
+
+#  NLP Query extraction 
+user_query = "Sandwitch with cheese, meat on the oven"
+top_documents = get_top_documents(user_query)
+print("Top Relevant Documents:")
+for doc in top_documents:
+    print(f"ID: {doc['id']}, Name: {doc['name']}, Similarity: {doc['similarity']:.4f}")
