@@ -1,8 +1,9 @@
 import os
-import psycopg2
-from psycopg2.extras import execute_values
-from dotenv import load_dotenv
 import ast
+import psycopg2
+import numpy as np 
+from dotenv import load_dotenv
+from psycopg2.extras import execute_values
 
 
 load_dotenv()
@@ -25,8 +26,10 @@ def test_db_connection():
     try:
         conn = psycopg2.connect(**db_config)
         print("Database connection established successfully!")
+        return True
     except psycopg2.Error as e:
         print(f"Error connecting to the database: {e}")
+        return False
     finally:
         if conn:
             conn.close()
@@ -78,3 +81,35 @@ def insert_recipes_to_db(dataframe):
     cursor.close()
     conn.close()
     print("Data successfully inserted into the database!")
+
+
+
+
+
+"""
+    Extract all the embeddings from the current recipes to train the classifier
+"""
+def get_recipes_embeddings():
+    conn = psycopg2.connect(**db_config)
+    cursor = conn.cursor()
+    
+    # Query to retrieve embeddings and cluster_id
+    query = "SELECT embedded_description, cluster_id FROM recipes"
+    cursor.execute(query)
+    rows = cursor.fetchall()
+
+    # Close the connection
+    cursor.close()
+    conn.close()
+    
+    # Convert query result to DataFrame
+    embeddings = [row[0] for row in rows]  # List of embeddings
+    cluster_ids = [row[1] for row in rows]  # List of cluster IDs
+    
+    # Convert embeddings to a numpy array
+    embeddings_array = np.array(embeddings)
+    
+    # Convert cluster IDs to a numpy array
+    cluster_ids_array = np.array(cluster_ids)
+    
+    return embeddings_array, cluster_ids_array
