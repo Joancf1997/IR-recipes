@@ -98,7 +98,6 @@ def classification_model():
 #  ===================== Visualization part =====================
 def Cluster_visualization(recipes_emb, num_clusters):
     print("Visualization of the clusters...")
-    print(recipes_emb["embedded_description"])
     # Perform PCA for dimensionality reduction to 3D
     embeddings = np.vstack(recipes_emb["embedded_description"].values)
     labels = np.vstack(recipes_emb["Cluster"].values)
@@ -140,29 +139,26 @@ def Cluster_visualization(recipes_emb, num_clusters):
 
 
 
-
-
-def classify_document(test_data):
+def classify_document(recipe):
     # Load the embedding model 
-    embedding_model = None
+    print("Classifying recipe...")
+    embedding_model = SentenceTransformer("embedding_model")
 
     # Load the classification model 
-    classify_recipe = None
+    with open("classification_model.pkl", "rb") as f:
+        classify_recipe = pickle.load(f)
 
     # (Clean and prepare text) - Preprocess the recipes 
-    test_preprocessed_recipes = preprocess_dataset(test_data)
+    test_preprocessed_recipe = clean_text(recipe)
 
     # Embed the recipes 
-    test_preprocessed_recipes["embedded_description"] = test_preprocessed_recipes["processed_description"].apply(
-        lambda x: embedding_model.encode(x) if x else None
-    )
+    recipe_embedding = embedding_model.encode(test_preprocessed_recipe)
+    recipe_embedding = recipe_embedding.reshape(1, -1)   # Reshape the embedding to be a 2D array
 
     # Classify the recipes 
-    for index, row in test_preprocessed_recipes.iterrows():
-        embedding = np.array(row['embedded_description']).reshape(1, -1)  # Convert to 2D array
-        prediction = classify_recipe(embedding)     
-        print(f"Row {index}: Classified as Cluster {prediction[0]}")
-    return prediction
+    prediction = classify_recipe.predict(recipe_embedding)
+    print(prediction[0])
+    return prediction[0]
     
 
 
