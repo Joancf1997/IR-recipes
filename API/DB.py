@@ -89,10 +89,44 @@ def get_embedded_descriptions():
     conn = psycopg2.connect(**db_config)
     cursor = conn.cursor()
 
-    cursor.execute("SELECT id, name, embedded_description FROM recipes")
+    cursor.execute("SELECT id, name, description, ingredients, embedded_description, cluster_id FROM recipes")
     documents = cursor.fetchall()
     
     return documents
+
+
+
+def listRecipesDB():
+    # Establish connection
+    conn = psycopg2.connect(**db_config)
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT id, name, description, ingredients, tags, cluster_id FROM recipes Limit 30;")
+    documents = cursor.fetchall()
+    
+    return documents
+
+
+"""
+    Fetch a list of recipes filtered by a specific cluster_id.
+"""
+def listRecipesClass(cluster_id):
+    # Establish connection
+    conn = psycopg2.connect(**db_config)
+    cursor = conn.cursor()
+
+    # Execute query
+    query = """
+        SELECT id, name, description, ingredients, tags, cluster_id
+        FROM recipes
+        WHERE cluster_id = %s
+        LIMIT 3;
+    """
+    cursor.execute(query, (str(cluster_id),))  # Use parameterized query to prevent SQL injection
+    documents = cursor.fetchall()
+
+    return documents
+
 
 
 

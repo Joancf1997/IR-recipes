@@ -11,7 +11,7 @@ from sklearn.ensemble import RandomForestClassifier             # Classification
 from sklearn.model_selection import train_test_split            # Classification model
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
-from DB import insert_recipes_to_db, get_recipes_embeddings, get_embedded_descriptions
+from DB import insert_recipes_to_db, get_recipes_embeddings, get_embedded_descriptions, listRecipesDB, listRecipesClass
 
 
 
@@ -141,25 +141,37 @@ def Cluster_visualization(recipes_emb, num_clusters):
 
 
 def classify_document(recipe):
-    # Load the embedding model 
-    print("Classifying recipe...")
-    embedding_model = SentenceTransformer("embedding_model")
+	# Load the embedding model 
+	print("Classifying recipe...")
+	embedding_model = SentenceTransformer("embedding_model")
 
-    # Load the classification model 
-    with open("classification_model.pkl", "rb") as f:
-        classify_recipe = pickle.load(f)
+	# Load the classification model 
+	with open("classification_model.pkl", "rb") as f:
+			classify_recipe = pickle.load(f)
 
-    # (Clean and prepare text) - Preprocess the recipes 
-    test_preprocessed_recipe = clean_text(recipe)
+	# (Clean and prepare text) - Preprocess the recipes 
+	test_preprocessed_recipe = clean_text(recipe)
 
-    # Embed the recipes 
-    recipe_embedding = embedding_model.encode(test_preprocessed_recipe)
-    recipe_embedding = recipe_embedding.reshape(1, -1)   # Reshape the embedding to be a 2D array
+	# Embed the recipes 
+	recipe_embedding = embedding_model.encode(test_preprocessed_recipe)
+	recipe_embedding = recipe_embedding.reshape(1, -1)   # Reshape the embedding to be a 2D array
 
-    # Classify the recipes 
-    prediction = classify_recipe.predict(recipe_embedding)
-    print(prediction[0])
-    return prediction[0]
+	# Classify the recipes 
+	prediction = classify_recipe.predict(recipe_embedding)
+
+	# List three recipes from the same cluster
+	recipes_cluster = listRecipesClass(prediction[0])
+	recipes_list = [
+		{
+			"id": row[0],
+			"name": row[1],
+			"description": row[2],
+			"ingredients": row[3],
+			"tags": row[4],
+			"cluster_id": row[5]
+		} for row in recipes_cluster
+	]
+	return prediction[0], recipes_list
     
 
 
@@ -183,12 +195,19 @@ def get_top_documents(user_query, top_n=3):
     # Extract embeddings and document metadata
     doc_ids = []
     doc_names = []
+    doc_description = []
+    doc_ingredients = []
     doc_embeddings = []
+    doc_cluster_id = []
+
     
     for doc in documents:
         doc_ids.append(doc[0])
         doc_names.append(doc[1])
-        doc_embeddings.append(np.array(doc[2]))  # Convert stored embedding string to NumPy array
+        doc_description.append(doc[2])
+        doc_ingredients.append(doc[3])
+        doc_embeddings.append(np.array(doc[4])) 
+        doc_cluster_id.append(doc[5])
     
     # Calculate cosine similarity between the query embedding and all document embeddings
     similarities = cosine_similarity(query_embedding, np.array(doc_embeddings)).flatten()
@@ -202,10 +221,34 @@ def get_top_documents(user_query, top_n=3):
         top_documents.append({
             "id": doc_ids[idx],
             "name": doc_names[idx],
-            "similarity": similarities[idx]
+            "description": doc_description[idx],
+            "ingredients": doc_ingredients[idx],
+            "similarity": similarities[idx],
+            "cluster_id": doc_cluster_id[idx]
         })
     
     return top_documents
+
+
+
+"""
+    Endpoint to list all recipes from the database.
+"""
+def listRecipes():   
+	recipes = listRecipesDB()
+	
+	recipes_list = [
+		{
+			"id": row[0],
+			"name": row[1],
+			"description": row[2],
+			"ingredients": row[3],
+			"tags": row[4],
+			"cluster_id": row[5]
+		} for row in recipes
+	]
+	return recipes_list
+
 
 
 

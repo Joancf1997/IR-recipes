@@ -1,13 +1,20 @@
+from flask_cors import CORS
 from DB import test_db_connection
 from flask import Flask, request, jsonify
-from IR import genesis, classify_document, get_top_documents
+from IR import genesis, classify_document, get_top_documents, listRecipes
 
 
 
 app = Flask(__name__)
+CORS(app)  # Enables CORS for all routes
+
 
 
 # List the top 40 recipes of the database 
+@app.route('/recipesList', methods=['GET'])
+def recipes_list():
+    recipes_list = listRecipes()
+    return jsonify({"recipes": recipes_list}), 200
 
 
 
@@ -36,8 +43,8 @@ def classify():
     if not recipe:
         return jsonify({"error": "No recipe provided"}), 400
 
-    response = classify_document(recipe)
-    return jsonify(response), 200
+    response, recipes = classify_document(recipe)
+    return jsonify({"class": str(response), "recipes": recipes}), 200
 
 
 # Return the top N recipes more related to the query
