@@ -38,7 +38,7 @@ IR-recipes/
 ├── preprocessing/          # Scripts for cleaning and preparing text data
 ├── retrieval/              # Core IR system and query processing
 ├── evaluation/             # Scripts to evaluate the retrieval performance
-├── app/                    # Flask app for the user interface (if applicable)
+├── app/                    # Flask app for the user interface
 ├── notebooks/              # Jupyter notebooks for experiments and analysis
 ├── requirements.txt        # Dependencies for the project
 └── README.md               # Project documentation
