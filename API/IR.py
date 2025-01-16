@@ -209,10 +209,10 @@ def get_top_documents(user_query, top_n=3):
         doc_embeddings.append(np.array(doc[4])) 
         doc_cluster_id.append(doc[5])
     
-    # Calculate cosine similarity between the query embedding and all document embeddings
+    # Calculate cosine similarity between the query embedding and the document embeddings
     similarities = cosine_similarity(query_embedding, np.array(doc_embeddings)).flatten()
     
-    # Get the top N most relevant document indices
+    # top N most relevant document indices
     top_indices = np.argsort(similarities)[::-1][:top_n]
     
     # Prepare the results
